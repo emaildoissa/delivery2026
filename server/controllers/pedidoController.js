@@ -1,7 +1,7 @@
 const db = require('../db/acessodados');
 
 // 1. Criar novo pedido (Área do Cliente)
-async function criarPedido(req, res, next) {
+async function criarPedido(req, res) {
     const {
         cliente_nome,
         cliente_telefone,
@@ -19,11 +19,11 @@ async function criarPedido(req, res, next) {
         total,
         observacao,
         itens
-    } = req.body;
+    } = req.body || {};
 
     if (!cliente_nome || !cliente_telefone || !itens || itens.length === 0) {
         res.send(400, { erro: 'Dados incompletos para a criação do pedido.' });
-        return next();
+        return;
     }
 
     // Utiliza uma transação SQL no Postgres para garantir atomicidade
@@ -94,12 +94,10 @@ async function criarPedido(req, res, next) {
     } finally {
         client.release();
     }
-
-    return next();
 }
 
 // 2. Listar pedidos por status (Painel Administrativo)
-async function listarPorStatus(req, res, next) {
+async function listarPorStatus(req, res) {
     const { statusId } = req.params;
 
     try {
@@ -119,12 +117,10 @@ async function listarPorStatus(req, res, next) {
         console.error('Erro ao listar pedidos:', err);
         res.send(500, { erro: 'Erro ao carregar lista de pedidos.' });
     }
-
-    return next();
 }
 
 // 3. Detalhes completos do pedido (Modal do Painel)
-async function detalharPedido(req, res, next) {
+async function detalharPedido(req, res) {
     const { id } = req.params;
 
     try {
@@ -139,14 +135,14 @@ async function detalharPedido(req, res, next) {
 
         if (pedidoResult.rows.length === 0) {
             res.send(404, { erro: 'Pedido não encontrado.' });
-            return next();
+            return;
         }
 
         const pedido = pedidoResult.rows[0];
 
         // Busca itens do pedido
         const itensResult = await db.query(
-            'SELECT * FROM pedido_item WHERE pedido_id = \$1',
+            'SELECT * FROM pedido_item WHERE pedido_id = $1',
             [id]
         );
 
@@ -154,7 +150,7 @@ async function detalharPedido(req, res, next) {
 
         for (let item of itens) {
             const opcResult = await db.query(
-                'SELECT opcional_item_nome, valor FROM pedido_item_opcional WHERE pedido_item_id = \$1',
+                'SELECT opcional_item_nome, valor FROM pedido_item_opcional WHERE pedido_item_id = $1',
                 [item.id]
             );
             item.opcionais = opcResult.rows;
@@ -167,23 +163,21 @@ async function detalharPedido(req, res, next) {
         console.error('Erro ao detalhar pedido:', err);
         res.send(500, { erro: 'Erro ao carregar detalhes do pedido.' });
     }
-
-    return next();
 }
 
 // 4. Atualizar o status do pedido (Pendente -> Aceito -> Em Preparo -> Concluído)
-async function atualizarStatus(req, res, next) {
+async function atualizarStatus(req, res) {
     const { id } = req.params;
-    const { pedido_status_id } = req.body;
+    const { pedido_status_id } = req.body || {};
 
     if (!pedido_status_id) {
         res.send(400, { erro: 'O novo status é obrigatório.' });
-        return next();
+        return;
     }
 
     try {
         await db.query(
-            'UPDATE pedido SET pedido_status_id = \$1 WHERE id = \$2',
+            'UPDATE pedido SET pedido_status_id = $1 WHERE id = $2',
             [pedido_status_id, id]
         );
 
@@ -192,8 +186,6 @@ async function atualizarStatus(req, res, next) {
         console.error('Erro ao atualizar status:', err);
         res.send(500, { erro: 'Erro ao atualizar status do pedido.' });
     }
-
-    return next();
 }
 
 module.exports = {

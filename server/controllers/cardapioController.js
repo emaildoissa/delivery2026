@@ -1,7 +1,7 @@
 const db = require('../db/acessodados');
 
 // Busca todas as categorias e seus respectivos produtos (Área do Cliente)
-async function listarCardapioCompleto(req, res, next) {
+async function listarCardapioCompleto(req, res) {
     try {
         // 1. Busca Categorias ativas
         const categoriasResult = await db.query(
@@ -26,18 +26,17 @@ async function listarCardapioCompleto(req, res, next) {
         console.error('Erro ao listar cardápio:', err);
         res.send(500, { erro: 'Erro ao carregar cardápio.' });
     }
-    return next();
 }
 
 // Busca detalhes de um produto específico com seus opcionais
-async function detalharProduto(req, res, next) {
+async function detalharProduto(req, res) {
     const { id } = req.params;
 
     try {
-        const prodResult = await db.query('SELECT * FROM produto WHERE id = \$1', [id]);
+        const prodResult = await db.query('SELECT * FROM produto WHERE id = $1', [id]);
         if (prodResult.rows.length === 0) {
             res.send(404, { erro: 'Produto não encontrado.' });
-            return next();
+            return;
         }
 
         const produto = prodResult.rows[0];
@@ -55,7 +54,7 @@ async function detalharProduto(req, res, next) {
         // Para cada grupo, busca os itens adicionais
         for (let opc of opcionais) {
             const itensResult = await db.query(
-                'SELECT id, nome, valor FROM opcional_item WHERE opcional_id = \$1 AND ativo = TRUE',
+                'SELECT id, nome, valor FROM opcional_item WHERE opcional_id = $1 AND ativo = TRUE',
                 [opc.id]
             );
             opc.itens = itensResult.rows;
@@ -67,7 +66,6 @@ async function detalharProduto(req, res, next) {
         console.error('Erro ao detalhar produto:', err);
         res.send(500, { erro: 'Erro ao buscar detalhes do produto.' });
     }
-    return next();
 }
 
 module.exports = {
