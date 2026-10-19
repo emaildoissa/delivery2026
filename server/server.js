@@ -7,8 +7,45 @@ const server = restify.createServer({
     version: '1.0.0'
 });
 
-// Middlewares
-server.use(cors());
+// Configuração robusta de CORS para o Restify
+const corsMiddleware = cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+});
+
+server.pre(corsMiddleware);
+server.use(corsMiddleware);
+
+// Middleware para garantir os cabeçalhos de CORS em todas as respostas
+server.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-access-token');
+    return next();
+});
+
+// Tratamento explícito para Preflight Requests (OPTIONS)
+server.opts('/*', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-access-token');
+    res.send(204);
+    return next();
+});
+
+// Fallback para quando o Restify emitir MethodNotAllowed em requisições OPTIONS
+server.on('MethodNotAllowed', (req, res) => {
+    if (req.method.toUpperCase() === 'OPTIONS') {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-access-token');
+        return res.send(204);
+    }
+    return res.send(405);
+});
+
+// Middlewares padrão do Restify
 server.use(restify.plugins.acceptParser(server.acceptable));
 server.use(restify.plugins.queryParser());
 server.use(restify.plugins.bodyParser());
