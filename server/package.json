@@ -1,0 +1,21 @@
+{
+    "name": "api-pizzaria",
+    "version": "1.0.0",
+    "description": "API REST para o aplicativo de delivery",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "jsonwebtoken": "^9.0.2",
+        "pg": "^8.11.3",
+        "restify": "^11.1.0",
+        "restify-errors": "^8.0.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}

@@ -1,0 +1,43 @@
+# ====================================
+# Variáveis de Ambiente e Segredos (NUNCA SUBIR)
+# ====================================
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+
+# ====================================
+# Dependências do Node
+# ====================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ====================================
+# Vercel e Builds de Frontend
+# ====================================
+.vercel/
+dist/
+build/
+.output/
+
+# ====================================
+# Arquivos de Sistema e IDEs
+# ====================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ====================================
+# Logs
+# ====================================
+logs/
+*.log

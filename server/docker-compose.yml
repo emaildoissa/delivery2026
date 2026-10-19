@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api-pizzaria:
+    image: emaildoissa/api-pizzaria-potpourri:v1
+    container_name: api-pizzaria
+    restart: unless-stopped
+    environment:
+      PORT: '3000'
+      NODE_ENV: 'production'
+      DB_HOST: 'postgres'
+      DB_PORT: '5432'
+      DB_USER: 'postgres'
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-pizzaria_potpourri}
+      DB_DATABASE: ${DB_DATABASE:-pizzaria_potpourri}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - interna
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.api-pizzaria-potpourri.rule=Host(`api-pizzaria-potpourri.automacao.free.nf`)
+        - traefik.http.routers.api-pizzaria-potpourri.entrypoints=websecure
+        - traefik.http.routers.api-pizzaria-potpourri.tls=true
+        - traefik.http.routers.api-pizzaria-potpourri.tls.certresolver=letsencryptresolver
+        - traefik.http.services.api-pizzaria-potpourri.loadbalancer.server.port=3000
+
+networks:
+  interna:
+    external: true
+    name: interna
