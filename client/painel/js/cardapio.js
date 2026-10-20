@@ -2,12 +2,14 @@ let categoriasLista = [];
 let produtosLista = [];
 let modalProdutoInstancia = null;
 let modalCategoriaInstancia = null;
+let modalConfigCloudinaryInstancia = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarAutenticacao();
 
     modalProdutoInstancia = new bootstrap.Modal(document.getElementById('modalProduto'));
     modalCategoriaInstancia = new bootstrap.Modal(document.getElementById('modalCategoria'));
+    modalConfigCloudinaryInstancia = new bootstrap.Modal(document.getElementById('modalConfigCloudinary'));
 
     carregarDadosIniciais();
 });
@@ -47,6 +49,79 @@ function alternarAba(aba) {
 async function carregarDadosIniciais() {
     await carregarCategorias();
     await carregarProdutos();
+}
+
+// ==========================================
+// CONFIGURAÇÃO DO CLOUDINARY
+// ==========================================
+
+function abrirModalConfigCloudinary() {
+    document.getElementById('cfg-cloud-name').value = localStorage.getItem('cloudinary_cloud_name') || '';
+    document.getElementById('cfg-upload-preset').value = localStorage.getItem('cloudinary_upload_preset') || '';
+    modalConfigCloudinaryInstancia.show();
+}
+
+function salvarConfigCloudinary(event) {
+    event.preventDefault();
+    const cloudName = document.getElementById('cfg-cloud-name').value.trim();
+    const uploadPreset = document.getElementById('cfg-upload-preset').value.trim();
+
+    localStorage.setItem('cloudinary_cloud_name', cloudName);
+    localStorage.setItem('cloudinary_upload_preset', uploadPreset);
+
+    alert('Configurações do Cloudinary salvas com sucesso!');
+    modalConfigCloudinaryInstancia.hide();
+}
+
+// Upload direto para o Cloudinary via Unsigned Preset
+async function fazerUploadCloudinary(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+
+    const cloudName = localStorage.getItem('cloudinary_cloud_name');
+    const uploadPreset = localStorage.getItem('cloudinary_upload_preset');
+
+    if (!cloudName || !uploadPreset) {
+        alert('Para enviar fotos diretamente do seu dispositivo, configure primeiro seu Cloud Name e Upload Preset do Cloudinary!');
+        inputElement.value = '';
+        abrirModalConfigCloudinary();
+        return;
+    }
+
+    const statusDiv = document.getElementById('upload-status');
+    const previewImg = document.getElementById('prod-preview-img');
+    const inputUrl = document.getElementById('prod-imagem');
+
+    statusDiv.innerHTML = '<span class="text-primary"><i class="spinner-border spinner-border-sm me-1"></i>Enviando imagem para o Cloudinary...</span>';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.secure_url) {
+            inputUrl.value = data.secure_url;
+            previewImg.src = data.secure_url;
+            statusDiv.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Foto enviada com sucesso!</span>';
+        } else {
+            throw new Error(data.error?.message || 'Falha ao processar imagem no Cloudinary.');
+        }
+    } catch (err) {
+        console.error('Erro no upload Cloudinary:', err);
+        statusDiv.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Erro: ${err.message}</span>`;
+    }
+}
+
+function atualizarPreviewUrl(url) {
+    const previewImg = document.getElementById('prod-preview-img');
+    previewImg.src = url || 'https://placehold.co/100x100?text=Sem+Foto';
 }
 
 // ==========================================
@@ -111,7 +186,6 @@ function popularSelectCategorias() {
     const selectFiltro = document.getElementById('filtro-categoria');
     const selectModal = document.getElementById('prod-categoria');
 
-    // Salva a seleção atual do filtro
     const filtroAtual = selectFiltro.value;
 
     selectFiltro.innerHTML = '<option value="">Todas as Categorias</option>' +
@@ -177,7 +251,7 @@ async function salvarCategoria(event) {
 
         modalCategoriaInstancia.hide();
         await carregarCategorias();
-        await carregarProdutos(); // Atualiza produtos para refletir mudanças na categoria
+        await carregarProdutos();
     } catch (err) {
         alert(err.message);
     }
@@ -301,6 +375,11 @@ function abrirModalProduto() {
     document.getElementById('prod-ordem').value = produtosLista.length + 1;
     document.getElementById('prod-ativo').checked = true;
 
+    // Reset upload e preview
+    document.getElementById('prod-arquivo').value = '';
+    document.getElementById('upload-status').innerHTML = 'Selecione uma imagem do computador ou celular';
+    document.getElementById('prod-preview-img').src = 'https://placehold.co/100x100?text=Sem+Foto';
+
     modalProdutoInstancia.show();
 }
 
@@ -317,6 +396,11 @@ function editarProduto(id) {
     document.getElementById('prod-imagem').value = prod.imagem || '';
     document.getElementById('prod-ordem').value = prod.ordem || 1;
     document.getElementById('prod-ativo').checked = prod.ativo;
+
+    // Reset upload e carregar foto atual
+    document.getElementById('prod-arquivo').value = '';
+    document.getElementById('upload-status').innerHTML = 'Selecione caso queira substituir a foto atual';
+    document.getElementById('prod-preview-img').src = prod.imagem || 'https://placehold.co/100x100?text=Sem+Foto';
 
     modalProdutoInstancia.show();
 }

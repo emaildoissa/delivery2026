@@ -44,9 +44,13 @@
                 <i class="bi bi-journal-text me-1"></i>Cardápio
             </a>
         </div>
-        <div class="ms-auto">
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair <i
-                    class="bi bi-box-arrow-right"></i></button>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <button class="btn btn-outline-warning btn-sm" onclick="abrirModalConfigCloudinary()">
+                <i class="bi bi-cloud-arrow-up me-1"></i> Cloudinary
+            </button>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                Sair <i class="bi bi-box-arrow-right"></i>
+            </button>
         </div>
     </nav>
 
@@ -179,9 +183,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">URL da Imagem</label>
-                            <input type="url" id="prod-imagem" class="form-control" placeholder="https://exemplo.com/foto.jpg">
-                            <small class="text-muted">Link direto da foto do produto</small>
+                            <label class="form-label fw-semibold">Foto do Produto</label>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <img id="prod-preview-img" src="https://placehold.co/100x100?text=Sem+Foto" 
+                                     class="rounded border" width="70" height="70" style="object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <input type="file" id="prod-arquivo" accept="image/*" class="form-control form-control-sm mb-1" onchange="fazerUploadCloudinary(this)">
+                                    <div id="upload-status" class="small text-muted">Selecione uma imagem do computador ou celular</div>
+                                </div>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-link-45deg"></i></span>
+                                <input type="url" id="prod-imagem" class="form-control" placeholder="URL da imagem (preenchida após upload)" oninput="atualizarPreviewUrl(this.value)">
+                            </div>
                         </div>
 
                         <div class="row g-2 mb-3">
@@ -243,6 +257,42 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-danger px-4" id="btn-salvar-categoria">Salvar Categoria</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIGURAÇÃO DO CLOUDINARY -->
+    <div class="modal fade" id="modalConfigCloudinary" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up text-warning me-2"></i>Configuração Cloudinary</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form onsubmit="salvarConfigCloudinary(event)">
+                    <div class="modal-body">
+                        <div class="alert alert-light border small text-muted mb-3">
+                            <i class="bi bi-info-circle text-primary me-1"></i>
+                            O Cloudinary armazena suas fotos na nuvem gratuitamente sem sobrecarregar sua VPS.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cloud Name *</label>
+                            <input type="text" id="cfg-cloud-name" class="form-control" placeholder="Ex: sua-empresa" required>
+                            <small class="text-muted">Encontrado no Dashboard do seu Cloudinary</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Upload Preset (Unsigned) *</label>
+                            <input type="text" id="cfg-upload-preset" class="form-control" placeholder="Ex: delivery_preset" required>
+                            <small class="text-muted">Criado em Settings > Upload > Upload presets (modo Unsigned)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-warning px-4 fw-semibold">Salvar Configuração</button>
                     </div>
                 </form>
             </div>
